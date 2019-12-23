@@ -8,19 +8,22 @@ import logging
 from os import path
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
+
 """
 replace custom_components.lyric with
 homeassistant.components.lyric when not
 placed in custom components
 """
-from custom_components.lyric import DATA_LYRIC, CONF_FAN, CONF_AWAY_PERIODS, DOMAIN
+from custom_components.lyric import DATA_LYRIC, DOMAIN
 from homeassistant.components.climate import ClimateDevice, PLATFORM_SCHEMA
 from homeassistant.components.climate.const import (
-    STATE_AUTO, STATE_COOL, STATE_HEAT, STATE_ECO,
-    ATTR_TARGET_TEMP_HIGH, ATTR_TARGET_TEMP_LOW,
-    SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_TARGET_TEMPERATURE_HIGH, SUPPORT_TARGET_TEMPERATURE_LOW,
-    SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_FAN_MODE)
+        HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_HEAT_COOL,
+        SUPPORT_TARGET_TEMPERATURE, SUPPORT_TARGET_TEMPERATURE_RANGE,
+        SUPPORT_FAN_MODE, SUPPORT_PRESET_MODE, CURRENT_HVAC_OFF,
+        CURRENT_HVAC_HEAT, CURRENT_HVAC_COOL, CURRENT_HVAC_IDLE,
+        FAN_ON, FAN_OFF, FAN_AUTO, FAN_DIFFUSE,
+        ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH
+)
 from homeassistant.const import (
     ATTR_ENTITY_ID, ATTR_TEMPERATURE, CONF_SCAN_INTERVAL,
     STATE_ON, STATE_OFF, STATE_UNKNOWN, TEMP_CELSIUS,
@@ -33,10 +36,7 @@ SERVICE_RESUME_PROGRAM = 'lyric_resume_program'
 SERVICE_RESET_AWAY = 'lyric_reset_away'
 STATE_HEAT_COOL = 'heat-cool'
 HOLD_NO_HOLD = 'NoHold'
-
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_TARGET_TEMPERATURE_HIGH |
-                 SUPPORT_TARGET_TEMPERATURE_LOW | SUPPORT_OPERATION_MODE |
-                 SUPPORT_AWAY_MODE | SUPPORT_FAN_MODE)
+HOLD_HOLD = 'Hold'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_SCAN_INTERVAL):
@@ -56,14 +56,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     _LOGGER.debug("climate discovery_info: %s" % discovery_info)
     _LOGGER.debug("climate config: %s" % config)
 
-    temp_unit = hass.config.units.temperature_unit
-    has_fan = discovery_info.get(CONF_FAN, False)
-    away_periods = discovery_info.get(CONF_AWAY_PERIODS, [])
-
     _LOGGER.debug('Set up Lyric climate platform')
 
-    devices = [LyricThermostat(location, device, hass, temp_unit, has_fan, away_periods)
-               for location, device in hass.data[DATA_LYRIC].thermostats()]
+    devices = [LyricThermostat(device)
+               for _, device in hass.data[DATA_LYRIC].thermostats()]
 
     add_devices(devices, True)
 
@@ -80,7 +76,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             target_thermostats = devices
 
         for thermostat in target_thermostats:
-            thermostat.set_hold_mode(HOLD_NO_HOLD)
+            thermostat.thermostatSetpointStatus = HOLD_NO_HOLD
             thermostat.away_override = False
 
     hass.services.register(
@@ -90,252 +86,183 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 class LyricThermostat(ClimateDevice):
     """Representation of a Lyric thermostat."""
 
-    def __init__(self, location, device, hass, temp_unit, has_fan, away_periods):
-        """Initialize the thermostat."""
-        self._unit = temp_unit
-        self.location = location
+    def __init__(self, device):
         self.device = device
-        self._hass = hass
 
-        self._away_periods = away_periods
+        self._hvac_possible_modes = {
+            'heat': HVAC_MODE_HEAT,
+            'off': HVAC_MODE_OFF,
+            'cool': HVAC_MODE_COOL,
+            'auto': HVAC_MODE_HEAT_COOL
+        }
 
-        _LOGGER.debug("away periods: %s" % away_periods)
+        self._hvac_possible_modes_rev = {
+            HVAC_MODE_HEAT: 'Heat',
+            HVAC_MODE_OFF: 'Off',
+            HVAC_MODE_COOL: 'Cool',
+            HVAC_MODE_HEAT_COOL: 'Auto'
+        }
 
-        # Not all lyric devices support cooling and heating remove unused
-        self._operation_list = [STATE_OFF]
+        self._hvac_possible_actions = {
+            'heat': CURRENT_HVAC_HEAT,
+            'off': CURRENT_HVAC_OFF,
+            'cool': CURRENT_HVAC_COOL,
+            'auto': CURRENT_HVAC_IDLE,
+            'equipmentoff': CURRENT_HVAC_OFF
+        }
 
-        # Add supported lyric thermostat features
-        if self.device.can_heat:
-            self._operation_list.append(STATE_HEAT)
+        self._fan_possible_modes = {
+            'on': FAN_ON,
+            'auto': FAN_AUTO,
+            'circulate': FAN_DIFFUSE
+        }
 
-        if self.device.can_cool:
-            self._operation_list.append(STATE_COOL)
+        self._fan_possible_modes_rev = {
+            FAN_ON: 'On',
+            FAN_AUTO: 'Auto',
+            FAN_DIFFUSE: 'Circulate'
+        }
 
-        if self.device.can_heat and self.device.can_cool:
-            self._operation_list.append(STATE_AUTO)
+        self.update()
 
-        # feature of device
-        self._has_fan = has_fan
-        if self._has_fan and "fan" in self.device.settings:
-            self._fan_list = self.device.settings["fan"].get("allowedModes")
+    def update(self):
+        self._name = self.device.name
+
+        if self.device.units == 'Celsius':
+            self._temperature_unit = TEMP_CELSIUS
         else:
-           self._fan_list = None
+            self._temperature_unit = TEMP_FAHRENHEIT
 
-        # data attributes
-        self._away = None
-        self._location = None
-        self._name = None
-        self._humidity = None
-        self._target_temperature = None
-        self._setpointStatus = None
-        self._temperature = None
-        self._temperature_scale = None
-        self._target_temp_heat = None
-        self._target_temp_cool = None
-        self._dualSetpoint = None
-        self._mode = None
-        self._fan = None
-        self._min_temperature = None
-        self._max_temperature = None
-        self._changeableValues = None
-        self._scheduleType = None
-        self._scheduleSubType = None
-        self._scheduleCapabilities = None
-        self._currentSchedulePeriod = None
-        self._currentSchedulePeriodDay = None
-        self._vacationHold = None
-        self.away_override = False
+        self._current_temperature = float(self.device.indoorTemperature)
 
+        self._target_temperature_step = float(1)
+        self._max_temp = int(self.device.maxSetpoint)
+        self._min_temp = int(self.device.minSetpoint)
+
+        self._hvac_modes = {}
+
+        for key in self.device.allowedModes:
+            self._hvac_modes[key.lower()] = self._hvac_possible_modes[key.lower()]
+
+        self._hvac_mode = self._hvac_modes[self.device.operationMode.lower()]
+        
+        self._hvac_action = self._hvac_possible_actions[self.device.operationStatus['mode'].lower()]
+
+        if self._hvac_mode == HVAC_MODE_HEAT_COOL or self.device.hasDualSetpointStatus:
+            self._has_dual_setpoints = True
+            self._supported_features = SUPPORT_TARGET_TEMPERATURE_RANGE
+            self._target_temperature = None
+            self._target_temperature_high = float(self.device.coolSetpoint)
+            self._target_temperature_low = float(self.device.heatSetpoint)
+        else:
+            self._has_dual_setpoints = False
+            self._supported_features = SUPPORT_TARGET_TEMPERATURE
+            
+            if self._hvac_mode == HVAC_MODE_HEAT:
+                self._target_temperature = float(self.device.heatSetpoint)
+            else:
+                self._target_temperature = float(self.device.coolSetpoint)
+
+            self._target_temperature_high = None
+            self._target_temperature_low = None
+
+        self._fan_modes = {}
+
+        for key in self.device.settings['fan']['allowedModes']:
+            self._fan_modes[key.lower()] = self._fan_possible_modes[key.lower()]
+
+        self._fan_mode = self._fan_modes[self.device.fanMode.lower()]
+
+        self._supported_features |= SUPPORT_FAN_MODE
+    
     @property
     def name(self):
         """Return the name of the lyric, if any."""
         return self._name
 
     @property
-    def supported_features(self):
-        """Return the list of supported features."""
-        return SUPPORT_FLAGS
-
-    @property
     def temperature_unit(self):
-        """Return the unit of measurement."""
-        return self._temperature_scale
-
+        return self._temperature_unit
+    
     @property
     def current_temperature(self):
-        """Return the current temperature."""
-        return self._temperature
-
-    @property
-    def current_operation(self):
-        """Return current operation ie. heat, cool, idle."""
-        if self._mode in [STATE_HEAT, STATE_COOL, STATE_OFF]:
-            return self._mode
-        elif self._mode == STATE_HEAT_COOL:
-            return STATE_AUTO
-        else:
-            return STATE_UNKNOWN
+        return self._current_temperature
 
     @property
     def target_temperature(self):
-        """Return the temperature we try to reach."""
-        if not self._dualSetpoint:
-            return self._target_temperature
-        else:
-            return None
-
-    @property
-    def target_temperature_low(self):
-        """Return the upper bound temperature we try to reach."""
-        if self._dualSetpoint:
-            return self._target_temp_cool
-        else:
-            return None
+        return self._target_temperature
 
     @property
     def target_temperature_high(self):
-        """Return the upper bound temperature we try to reach."""
-        if self._dualSetpoint:
-            return self._target_temp_heat
-        else:
-            return None
+        return self._target_temperature_high
 
     @property
-    def is_away_mode_on(self):
-        """Return if away mode is on."""
-        if self.away_override:
-            return self._away
-        elif self._scheduleType == 'Timed' and self._away_periods:
-            return self._currentSchedulePeriod in self._away_periods
-        else:
-            return self._away
+    def target_temperature_low(self):
+        return self._target_temperature_low
+
+    @property
+    def target_temperature_step(self):
+        return self._target_temperature_step
+    
+    @property
+    def max_temp(self):
+        return self._max_temp
+
+    @property
+    def min_temp(self):
+        return self._min_temp
+
+    @property
+    def hvac_mode(self):
+        return self._hvac_mode
+
+    @property
+    def hvac_action(self):
+        return self._hvac_action
+
+    @property
+    def hvac_modes(self):
+        return list(tuple(self._hvac_modes.values()))
+
+    @property
+    def fan_mode(self):
+        return self._fan_mode
+
+    @property
+    def fan_modes(self):
+        return list(tuple(self._fan_modes.values()))
+
+    @property
+    def supported_features(self):
+        return self._supported_features
 
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
         target_temp_low = kwargs.get(ATTR_TARGET_TEMP_LOW)
         target_temp_high = kwargs.get(ATTR_TARGET_TEMP_HIGH)
-        if self._dualSetpoint:
+        if self._has_dual_setpoints:
             if target_temp_low is not None and target_temp_high is not None:
-                temp = (target_temp_low, target_temp_high)
+                if(target_temp_high - target_temp_low < 1):
+                    target_temp_high = target_temp_low + 1
+                
+                temp = (target_temp_high, target_temp_low)
         else:
             temp = kwargs.get(ATTR_TEMPERATURE)
+        
+        self.device.thermostatSetpointStatus = 'TemporaryHold'
         _LOGGER.debug("Lyric set_temperature-output-value=%s", temp)
         self.device.temperatureSetpoint = temp
 
-    def set_operation_mode(self, operation_mode):
-        """Set operation mode."""
-        _LOGGER.debug(operation_mode)
-        _LOGGER.debug(operation_mode.capitalize())
-
-        if operation_mode in [STATE_HEAT, STATE_COOL, STATE_OFF]:
-            device_mode = operation_mode
-        elif operation_mode == STATE_AUTO:
-            device_mode = STATE_HEAT_COOL
-        self.device.operationMode = device_mode.capitalize()
-
-    @property
-    def operation_list(self):
-        """List of available operation modes."""
-        return self._operation_list
-
-    def turn_away_mode_on(self):
-        """Turn away on."""
-        self._away = True
-        self.away_override = True
-        self._hass.bus.fire('override_away_on', {
-                                'entity_id': self.entity_id
-                           })
-
-    def turn_away_mode_off(self):
-        """Turn away off."""
-        self._away = False
-        self.away_override = True
-        self._hass.bus.fire('override_away_off', {
-                                'entity_id': self.entity_id
-                           })
-    @property
-    def current_hold_mode(self):
-        """Return current hold mode."""
-        return self._setpointStatus
-
-    def set_hold_mode(self, hold_mode):
-        """Set hold mode (PermanentHold, HoldUntil, NoHold,
-        VacationHold, etc.)."""
-        self.device.thermostatSetpointStatus = hold_mode
-
-    @property
-    def current_fan_mode(self):
-        """Return whether the fan is on."""
-        if self._has_fan:
-            # Return whether the fan is on
-            return self._fan
-        else:
-            # No Fan available so disable slider
-            return None
-
-    @property
-    def fan_list(self):
-        """List of available fan modes."""
-        return self._fan_list
+    def set_hvac_mode(self, hvac_mode):
+        """Set hvac mode."""
+        if hvac_mode in self._hvac_possible_modes_rev.keys():
+            self.device.thermostatSetpointStatus = 'TemporaryHold'
+            self.device.mode = self._hvac_possible_modes_rev[hvac_mode]
+            _LOGGER.debug("Lyric set_hvac_mode-output-value=%s", self._hvac_possible_modes_rev[hvac_mode])
+            self.device.operationMode = self._hvac_possible_modes_rev[hvac_mode]
 
     def set_fan_mode(self, fan):
         """Set fan state."""
-        self.device.fan = fan
-
-    @property
-    def min_temp(self):
-        """Identify min_temp in Lyric API or defaults if not available."""
-        return self._min_temperature
-
-    @property
-    def max_temp(self):
-        """Identify max_temp in Lyric API or defaults if not available."""
-        return self._max_temperature
-
-    @property
-    def device_state_attributes(self):
-        """Return device specific state attributes."""
-        attrs = {"schedule": self._scheduleType, "away_override": self.away_override}
-        if self._scheduleSubType:
-            attrs["schedule_sub"] = self._scheduleSubType
-        if self._vacationHold:
-            attrs["vacation"] = self._vacationHold
-        if self._currentSchedulePeriodDay:
-            attrs["current_schedule_day"] = self._currentSchedulePeriodDay
-        if self._currentSchedulePeriod:
-            attrs["current_schedule_period"] = self._currentSchedulePeriod
-        return attrs
-
-    def update(self):
-        """Cache value from python-lyric."""
-        if self.device:
-            self._location = self.device.where
-            self._name = self.device.name
-            self._humidity = self.device.indoorHumidity
-            self._temperature = self.device.indoorTemperature
-            self._mode = self.device.operationMode.lower()
-            self._setpointStatus = self.device.thermostatSetpointStatus
-            self._target_temperature = self.device.temperatureSetpoint
-            self._target_temp_heat = self.device.heatSetpoint
-            self._target_temp_cool = self.device.coolSetpoint
-            self._dualSetpoint = self.device.hasDualSetpointStatus
-            self._fan = self.device.fanMode
-            if self.away_override == False:
-                self._away = self.device.away
-            self._min_temperature = self.device.minSetpoint
-            self._max_temperature = self.device.maxSetpoint
-            # self._changeableValues = self.device.changeableValues
-            self._scheduleType = self.device.scheduleType
-            self._scheduleSubType = self.device.scheduleSubType
-            # self._scheduleCapabilities = self.device.scheduleCapabilities
-            self._vacationHold = self.device.vacationHold
-            if self.device.currentSchedulePeriod:
-                if 'period' in  self.device.currentSchedulePeriod:
-                    self._currentSchedulePeriod = self.device.currentSchedulePeriod['period']
-                if 'day' in  self.device.currentSchedulePeriod:
-                    self._currentSchedulePeriod = self.device.currentSchedulePeriod['day']
-
-            if self.device.units == 'Celsius':
-                self._temperature_scale = TEMP_CELSIUS
-            else:
-                self._temperature_scale = TEMP_FAHRENHEIT
+        if fan in self._fan_possible_modes_rev.keys():
+            self.device.thermostatSetpointStatus = 'TemporaryHold'
+            self.device.fanMode = self._fan_possible_modes_rev[fan]

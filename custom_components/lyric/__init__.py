@@ -101,9 +101,6 @@ def setup_lyric(hass, lyric, config, url=None):
     conf.pop(CONF_CLIENT_ID)
     conf.pop(CONF_CLIENT_SECRET)
     discovery.load_platform(hass, 'climate', DOMAIN, conf, config)
-#    discovery.load_platform(hass, 'sensor', DOMAIN, {}, config)
-#    discovery.load_platform(hass, 'binary_sensor', DOMAIN, {}, config)
-#    discovery.load_platform(hass, 'camera', DOMAIN, {}, config)
     _LOGGER.debug("setup done of component")
 
     return True
@@ -111,7 +108,7 @@ def setup_lyric(hass, lyric, config, url=None):
 
 def setup(hass, config):
     """Set up the Lyric component."""
-    import lyric
+    from . import lyric as local_lyric
 
     if 'lyric' in _CONFIGURING:
         return
@@ -125,7 +122,7 @@ def setup(hass, config):
     redirect_uri = conf.get(CONF_REDIRECT_URI, hass.config.api.base_url +
                             '/api/lyric/authenticate')
 
-    lyric = lyric.Lyric(
+    lyric = local_lyric.Lyric(
         token_cache_file=token_cache_file,
         client_id=client_id, client_secret=client_secret,
         app_name='Home Assistant', redirect_uri=redirect_uri,
@@ -196,7 +193,7 @@ class LyricAuthenticateView(HomeAssistantView):
     def get(self, request):
         """Handle a GET request."""
         hass = request.app['hass']
-        data = request.GET
+        data = request.query
 
         if 'code' not in data or 'state' not in data:
             return self.json_message('Authentication failed, not the right '
@@ -204,6 +201,6 @@ class LyricAuthenticateView(HomeAssistantView):
 
         self.lyric.authorization_code(code=data['code'], state=data['state'])
 
-        return self.json_message('OK! All good. Got the response! You can close'
-                                 'this window now, and click << Continue >>'
+        return self.json_message('OK! All good. Got the response! You can close '
+                                 'this window now, and click << Continue >> '
                                  'in the configurator.')
