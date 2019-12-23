@@ -1,5 +1,10 @@
 # Honeywell Lyric Custom Component (for Home Assistant)
 
+This is an updated, working integration (December 2019), that is based on these two great libraries that unfortunately appear to be abandoned, buggy, and no longer work:
+
+* https://github.com/bramkragten/python-lyric
+* https://github.com/bramkragten/lyric
+
 This will give support for the [Honeywell Lyric](http://yourhome.honeywell.com/en/products/thermostat/lyric-thermostat) thermostats in [Home Assistant](https://www.home-assistant.io/)
 
 - Visit [Honeywell Developers](http://developer.honeywell.com/), and sign in. Create an account if you don’t have one already.
