@@ -5,29 +5,23 @@ For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/climate.lyric/
 """
 import logging
-from os import path
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 
-"""
-replace custom_components.lyric with
-homeassistant.components.lyric when not
-placed in custom components
-"""
 from custom_components.lyric import DATA_LYRIC, DOMAIN
 from homeassistant.components.climate import ClimateDevice, PLATFORM_SCHEMA
 from homeassistant.components.climate.const import (
-        HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_HEAT_COOL,
-        SUPPORT_TARGET_TEMPERATURE, SUPPORT_TARGET_TEMPERATURE_RANGE,
-        SUPPORT_FAN_MODE, SUPPORT_PRESET_MODE, CURRENT_HVAC_OFF,
-        CURRENT_HVAC_HEAT, CURRENT_HVAC_COOL, CURRENT_HVAC_IDLE,
-        FAN_ON, FAN_OFF, FAN_AUTO, FAN_DIFFUSE,
-        ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH
+    HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_HEAT_COOL,
+    SUPPORT_TARGET_TEMPERATURE, SUPPORT_TARGET_TEMPERATURE_RANGE,
+    SUPPORT_FAN_MODE, CURRENT_HVAC_OFF,
+    CURRENT_HVAC_HEAT, CURRENT_HVAC_COOL, CURRENT_HVAC_IDLE,
+    FAN_ON, FAN_AUTO, FAN_DIFFUSE,
+    ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID, ATTR_TEMPERATURE, CONF_SCAN_INTERVAL,
-    STATE_ON, STATE_OFF, STATE_UNKNOWN, TEMP_CELSIUS,
-    TEMP_FAHRENHEIT)
+    TEMP_CELSIUS, TEMP_FAHRENHEIT
+)
 
 DEPENDENCIES = ['lyric']
 _LOGGER = logging.getLogger(__name__)
@@ -46,6 +40,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 RESUME_PROGRAM_SCHEMA = vol.Schema({
     vol.Optional(ATTR_ENTITY_ID): cv.entity_ids
 })
+
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the Lyric thermostat."""
@@ -83,14 +78,18 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         DOMAIN, SERVICE_RESUME_PROGRAM, resume_program_service,
         schema=RESUME_PROGRAM_SCHEMA)
 
+
 class LyricThermostat(ClimateDevice):
     """Representation of a Lyric thermostat."""
 
     def __init__(self, device):
+        """Setup Themostate Class"""
+
         self.device = device
 
         self._hvac_possible_modes = {
             'heat': HVAC_MODE_HEAT,
+            'emergencyheat': HVAC_MODE_HEAT,
             'off': HVAC_MODE_OFF,
             'cool': HVAC_MODE_COOL,
             'auto': HVAC_MODE_HEAT_COOL
@@ -126,6 +125,8 @@ class LyricThermostat(ClimateDevice):
         self.update()
 
     def update(self):
+        """Update all properties"""
+
         self._name = self.device.name
 
         if self.device.units == 'Celsius':
@@ -157,7 +158,7 @@ class LyricThermostat(ClimateDevice):
         else:
             self._has_dual_setpoints = False
             self._supported_features = SUPPORT_TARGET_TEMPERATURE
-            
+ 
             if self._hvac_mode == HVAC_MODE_HEAT:
                 self._target_temperature = float(self.device.heatSetpoint)
             else:
@@ -174,7 +175,7 @@ class LyricThermostat(ClimateDevice):
         self._fan_mode = self._fan_modes[self.device.fanMode.lower()]
 
         self._supported_features |= SUPPORT_FAN_MODE
-    
+
     @property
     def name(self):
         """Return the name of the lyric, if any."""
@@ -182,58 +183,72 @@ class LyricThermostat(ClimateDevice):
 
     @property
     def temperature_unit(self):
+        """Return temperature unit C/F"""
         return self._temperature_unit
-    
+
     @property
     def current_temperature(self):
+        """Return current temperature"""
         return self._current_temperature
 
     @property
     def target_temperature(self):
+        """Return target temperature"""
         return self._target_temperature
 
     @property
     def target_temperature_high(self):
+        """Return target high temperature"""
         return self._target_temperature_high
 
     @property
     def target_temperature_low(self):
+        """Return target low temerature"""
         return self._target_temperature_low
 
     @property
     def target_temperature_step(self):
+        """Return target temperature step"""
         return self._target_temperature_step
-    
+
     @property
     def max_temp(self):
+        """Return max temperature"""
         return self._max_temp
 
     @property
     def min_temp(self):
+        """Return min temperature"""
         return self._min_temp
 
     @property
     def hvac_mode(self):
+        """Return HVAC mode"""
         return self._hvac_mode
 
     @property
     def hvac_action(self):
+        """Return HVAC action"""
         return self._hvac_action
 
     @property
     def hvac_modes(self):
+        """Return HVAC possible  modes"""
         return list(tuple(self._hvac_modes.values()))
 
     @property
     def fan_mode(self):
+        """Return fan mode"""
         return self._fan_mode
 
     @property
     def fan_modes(self):
+        """Return possible fan modes"""
         return list(tuple(self._fan_modes.values()))
 
     @property
     def supported_features(self):
+        """Return supported features"""
         return self._supported_features
 
     def set_temperature(self, **kwargs):
@@ -244,11 +259,11 @@ class LyricThermostat(ClimateDevice):
             if target_temp_low is not None and target_temp_high is not None:
                 if(target_temp_high - target_temp_low < 1):
                     target_temp_high = target_temp_low + 1
-                
+
                 temp = (target_temp_high, target_temp_low)
         else:
             temp = kwargs.get(ATTR_TEMPERATURE)
-        
+
         self.device.thermostatSetpointStatus = 'TemporaryHold'
         _LOGGER.debug("Lyric set_temperature-output-value=%s", temp)
         self.device.temperatureSetpoint = temp

@@ -5,12 +5,11 @@ For more details about this component, please refer to the documentation at
 https://home-assistant.io/components/lyric/
 """
 import logging
-import socket
 import asyncio
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
-from homeassistant.const import (CONF_SCAN_INTERVAL, HTTP_BAD_REQUEST, HTTP_OK)
+from homeassistant.const import (CONF_SCAN_INTERVAL, HTTP_BAD_REQUEST)
 from homeassistant.components.http import HomeAssistantView
 
 _CONFIGURING = {}
@@ -181,6 +180,7 @@ class LyricDevice(object):
 
 class LyricAuthenticateView(HomeAssistantView):
     """Handle redirects from lyric oauth2 api, to authenticate."""
+
     url = '/api/lyric/authenticate'
     name = 'api:lyric:authenticate'
     requires_auth = False
@@ -192,7 +192,6 @@ class LyricAuthenticateView(HomeAssistantView):
     @asyncio.coroutine
     def get(self, request):
         """Handle a GET request."""
-        hass = request.app['hass']
         data = request.query
 
         if 'code' not in data or 'state' not in data:

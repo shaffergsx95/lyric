@@ -17,7 +17,11 @@ REFRESH_URL = TOKEN_URL
 
 
 class lyricDevice(object):
+    """Lyric Device Class"""
+    
     def __init__(self, deviceId, location, lyric_api, local_time=False):
+        """Setup Device Class"""
+
         self._deviceId = deviceId
         self._location = location
         self._locationId = self._location.locationId
@@ -25,23 +29,33 @@ class lyricDevice(object):
         self._local_time = local_time
 
     def __repr__(self):
+        """Debug string representation"""
+
         return '<%s: %s>' % (self.__class__.__name__, self._repr_name)
 
     def _set(self, endpoint, data, **params):
+        """Setter Magic Method"""
+
         params['locationId'] = self._location.locationId
         print(self._lyric_api._post(endpoint, data, **params))
         self._lyric_api._bust_cache_all()
 
     @property
     def id(self):
+        """Return id"""
+
         return self._deviceId
 
     @property
     def device(self):
+        """Return device"""
+
         return self._lyric_api._device(self._locationId, self._deviceId)
 
     @property
     def name(self):
+        """Return Name"""
+
         if 'name' in self.device:
             return self.device.get('name')
         else:
@@ -49,140 +63,205 @@ class lyricDevice(object):
 
     @property
     def _repr_name(self):
+        """Return User Defined Name"""
+
         return self.userDefinedDeviceName
 
     @property
     def deviceClass(self):
+        """Return class"""
+
         return self.device.get('deviceClass')
 
     @property
     def deviceType(self):
+        """Return Device Type"""
+
         return self.device.get('deviceType')
 
     @property
     def deviceID(self):
+        """Return Device ID"""
+
         return self.device.get('deviceID')
 
     @property
     def userDefinedDeviceName(self):
+        """Return User Defined Name"""
+
         return self.device.get('userDefinedDeviceName')
 
 
 class Location(object):
+    """Store Location Information"""
 
     def __init__(self, locationId, lyric_api, local_time=False):
+        """Setup Location Class"""
+
         self._locationId = locationId
         self._lyric_api = lyric_api
         self._local_time = local_time
 
     def __repr__(self):
+        """Print helpful debug information"""
+
         return '<%s: %s>' % (self.__class__.__name__, self._repr_name)
 
     @property
     def id(self):
+        """Return id"""
+
         return self._locationId
 
     @property
     def locationId(self):
+        """Return Location ID"""
+
         return self._locationId
 
     @property
     def location(self):
+        """Return Location"""
+
         return self._lyric_api._location(self._locationId)
 
     @property
     def locationID(self):
+        """Return Location ID"""
+
         return self.location.get('locationID')
 
     @property
     def name(self):
+        """Return name"""
+
         return self.location.get('name')
 
     @property
     def _repr_name(self):
+        """Return name"""
+
         return self.name
 
     @property
     def streetAddress(self):
+        """Return street address"""
+
         return self.location.get('streetAddress')
 
     @property
     def city(self):
+        """Return city"""
+
         return self.location.get('city')
 
     @property
     def state(self):
+        """Return state"""
+
         return self.location.get('state')
 
     @property
     def country(self):
+        """Return country"""
+
         return self.location.get('country')
 
     @property
     def zipcode(self):
+        """Return zipcode"""
+
         return self.location.get('zipcode')
 
     @property
     def timeZone(self):
+        """Return timezone"""
+
         return self.location.get('timeZone')
 
     @property
     def daylightSavingTimeEnabled(self):
+        """Return daylight savings time enabled"""
+        
         return self.location.get('daylightSavingTimeEnabled')
 
     @property
     def geoFenceEnabled(self):
+        """Return geofencing enabled"""
+
         return self.location.get('geoFenceEnabled')
 
     @property
     def geoFences(self):
+        """Return geofences"""
+
         return self.location.get('geoFences')
 
     @property
     def geoFence(self, index=0):
+        """Return specific geofence"""
+
         if self.geoFences and len(self.geoFences) >= index+1:
             return self.geoFences[index]
 
     @property
     def geoOccupancy(self):
+        """Return geo Occupancy"""
+
         if 'geoOccupancy' in self.geoFence:
             return self.geoFence.get('geoOccupancy')
 
     @property
     def withInFence(self):
+        """Return user in fence"""
+
         if 'withinFence' in self.geoOccupancy:
             return self.geoOccupancy.get('withinFence')
 
     @property
     def outsideFence(self):
+        """Return user out of fence"""
+
         if 'outsideFence' in self.geoOccupancy:
             return self.geoOccupancy.get('outsideFence')
 
     @property
     def _users(self):
+        """Return Users"""
+
         return self._lyric_api._users(self._locationId)
 
     @property
     def _devices(self, forceGet=False):
+        """Return devices"""
+
         return self._lyric_api._devices(self._locationId, forceGet)
 
     @property
     def _thermostats(self):
+        """Return thermostats"""
+
         return self._lyric_api._devices_type('thermostats', self._locationId)
 
     @property
     def _waterLeakDetectors(self):
+        """Return water leak dectectors"""
+
         return self._lyric_api._devices_type('waterLeakDetectors',
                                              self._locationId)
 
     @property
     def users(self):
+        """Return Users"""
+
         return [User(user.get('userID'), self, self._lyric_api,
                      self._local_time)
                 for user in self._users]
 
     @property
     def devices(self):
+        """Return devices"""
+
         devices = []
         for device in self._devices:
             if device['deviceType'] == 'Thermostat':
@@ -199,6 +278,8 @@ class Location(object):
 
     @property
     def thermostats(self):
+        """Return thermostats"""
+
         thermostats = []
         for device in self._devices:
             if device['deviceType'] == 'Thermostat':
@@ -209,6 +290,8 @@ class Location(object):
 
     @property
     def waterLeakDetectors(self):
+        """Return water leak detectors"""
+
         waterLeakDetectors = []
         for device in self._devices:
             if device['deviceType'] == 'Water Leak Detector':
@@ -220,7 +303,11 @@ class Location(object):
 
 
 class User(object):
+    """User class"""
+
     def __init__(self, userId, location, lyric_api, local_time=False):
+        """Setup User class"""
+
         self._location = location
         self._locationId = self._location.locationId
         self._userId = userId
@@ -228,71 +315,106 @@ class User(object):
         self._local_time = local_time
 
     def __repr__(self):
+        """Print out helpful debug"""
+
         return '<%s: %s>' % (self.__class__.__name__, self._repr_name)
 
     @property
     def id(self):
+        """Return ID"""
+
         return self._userId
 
     @property
     def name(self):
+        """Return name"""
+
         return self.username
 
     @property
     def _repr_name(self):
+        """Return name"""
+
         return self.username
 
     @property
     def user(self):
+        """Return user"""
+
         return self._lyric_api._user(self._locationId, self._userId)
 
     @property
     def userID(self):
+        """Return userID"""
+
         return self.user.get('userID')
 
     @property
     def username(self):
+        """Return username"""
+
         return self.user.get('username')
 
     @property
     def firstname(self):
+        """Return firstname"""
+
         return self.user.get('firstname')
 
     @property
     def lastname(self):
+        """Return lastname"""
+
         return self.user.get('lastname')
 
     @property
     def created(self):
+        """Return created"""
+
         return self.user.get('created')
 
     @property
     def deleted(self):
+        """Return deleted"""
+
         return self.user.get('deleted')
 
     @property
     def activated(self):
+        """Return activated"""
+
         return self.user.get('activated')
 
     @property
     def connectedHomeAccountExists(self):
+        """Return connected home account exists"""
+
         return self.user.get('connectedHomeAccountExists')
 
 
 class Device(lyricDevice):
+    """Device class"""
+
     @property
     def unknownType(self):
+        """Return unknown type"""
+
         return True
 
     def properties(self):
+        """Return properties"""
+
         return self.device
 
 
 class Thermostat(lyricDevice):
+    """Thermostat Class"""
 
     def updateThermostat(self, mode=None, heatSetpoint=None, coolSetpoint=None,
-                         AutoChangeover=None, thermostatSetpointStatus=None,
-                         nextPeriodTime=None):
+            AutoChangeover=None, thermostatSetpointStatus=None,
+            nextPeriodTime=None):
+        """Update Themostate"""
+
         if mode is None:
             mode = self.operationMode
         if heatSetpoint is None:
@@ -325,6 +447,8 @@ class Thermostat(lyricDevice):
         self._set('devices/thermostats/' + self._deviceId, data=data)
 
     def updateFan(self, mode):
+        """Update Fan"""
+
         if mode is None:
             mode = self.fanMode
 
@@ -332,6 +456,8 @@ class Thermostat(lyricDevice):
 
     @property
     def away(self):
+        """Get away status"""
+
         if self.scheduleType == 'Geofence':
             if self._location.geoFenceEnabled:
                 return (self._location.withInFence == 0)
@@ -344,39 +470,56 @@ class Thermostat(lyricDevice):
 
     @property
     def vacationHold(self):
+        """Return vacation hold"""
+
         return self.device.get('vacationHold').get('enabled')
 
     @property
     def where(self):
+        """Return location"""
+
         return self._location.name
 
     @property
     def units(self):
+        """Return units"""
+
         return self.device.get('units')
 
     @property
     def indoorTemperature(self):
+        """Return indoor temperature"""
+
         return self.device.get('indoorTemperature')
 
     @property
     def heatSetpoint(self):
+        """Return Heat Setpoint"""
+
         return self.changeableValues.get('heatSetpoint')
 
     @property
     def coolSetpoint(self):
+        """Return Cool Setpoint"""
+
         return self.changeableValues.get('coolSetpoint')
 
     @property
     def thermostatSetpointStatus(self):
+        """Return thermostat Set Point"""
+
         return self.changeableValues.get('thermostatSetpointStatus')
 
     @thermostatSetpointStatus.setter
     def thermostatSetpointStatus(self, thermostatSetpointStatus):
-        self.updateThermostat(
-            thermostatSetpointStatus=thermostatSetpointStatus)
+        """Set Thermostat"""
+
+        self.updateThermostat(thermostatSetpointStatus=thermostatSetpointStatus)
 
     def thermostatSetpointHoldUntil(self, nextPeriodTime, heatSetpoint=None,
                                     coolSetpoint=None):
+        """Set thermostate hold until point"""
+        
         if (nextPeriodTime is None):
             raise ValueError('nextPeriodTime is required')
         self.updateThermostat(heatSetpoint=heatSetpoint,
@@ -386,22 +529,32 @@ class Thermostat(lyricDevice):
 
     @property
     def nextPeriodTime(self):
+        """Return next period time"""
+
         return self.changeableValues.get('nextPeriodTime')
 
     @property
     def auto_changeover(self):
+        """Return auto change over"""
+
         return self.changeableValues.get('AutoChangeover')
 
     @property
     def operationMode(self):
+        """Return operation mode"""
+
         return self.changeableValues.get('mode')
 
     @operationMode.setter
     def operationMode(self, mode):
+        """Set operation mode"""
+
         self.updateThermostat(mode=mode)
 
     @property
     def temperatureSetpoint(self):
+        """Return temperature set point"""
+
         if self.operationMode == 'Heat':
             return self.changeableValues.get('heatSetpoint')
         else:
@@ -409,6 +562,7 @@ class Thermostat(lyricDevice):
 
     @temperatureSetpoint.setter
     def temperatureSetpoint(self, setpoint):
+        """Set temperature set point"""
 
         if self.thermostatSetpointStatus in ['NoHold', 'HoldUntil']:
             thermostatSetpointStatus = 'TemporaryHold'
@@ -428,46 +582,68 @@ class Thermostat(lyricDevice):
 
     @property
     def can_heat(self):
+        """Return can heat"""
+
         return ("Heat" in self.allowedModes)
 
     @property
     def can_cool(self):
+        """Return can cool"""
+
         return ("Cool" in self.allowedModes)
 
     @property
     def has_fan(self):
+        """Return has fan"""
+
         return True
 
     @property
     def outdoorTemperature(self):
+        """Return outdoor temperature"""
+
         return self.device.get('outdoorTemperature')
 
     @property
     def allowedModes(self):
+        """Return allowed modes"""
+
         return self.device.get('allowedModes')
 
     @property
     def deadband(self):
+        """Return deadband"""
+
         return self.device.get('deadband')
 
     @property
     def hasDualSetpointStatus(self):
+        """Return has dual set points"""
+
         return self.device.get('hasDualSetpointStatus')
 
     @property
     def minHeatSetpoint(self):
+        """Return min heat set point"""
+
         return self.device.get('minHeatSetpoint')
 
     @property
     def maxHeatSetpoint(self):
+        """Return max heat setpoint"""
+
         return self.device.get('maxHeatSetpoint')
 
     @property
     def minCoolSetpoint(self):
+        """Return min cool set point"""
+
         return self.device.get('minCoolSetpoint')
 
     @property
     def maxCoolSetpoint(self):
+        """Return max cool setpoint"""
+
         return self.device.get('maxCoolSetpoint')
 
     @property
