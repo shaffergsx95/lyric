@@ -2,8 +2,14 @@
   "domain": "lyric",
   "name": "Honeywell Lyric",
   "documentation": "https://github.com/shellster/lyric",
-  "dependencies": [],
-  "requirements": [],
+  "dependencies": [
+      "configurator",
+      "http"
+  ],
+  "requirements": [
+      "voluptuous",
+      "requests"
+  ],
   "codeowners": [
     "@shellster"
   ]
