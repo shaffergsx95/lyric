@@ -60,6 +60,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
     def resume_program_service(service):
         """Resume the program on the target thermostats."""
+
         entity_id = service.data.get(ATTR_ENTITY_ID)
 
         _LOGGER.debug('resume_program_service entity_id: %s' % entity_id)
@@ -179,80 +180,96 @@ class LyricThermostat(ClimateDevice):
     @property
     def name(self):
         """Return the name of the lyric, if any."""
+        
         return self._name
 
     @property
     def temperature_unit(self):
         """Return temperature unit C/F"""
+        
         return self._temperature_unit
 
     @property
     def current_temperature(self):
         """Return current temperature"""
+        
         return self._current_temperature
 
     @property
     def target_temperature(self):
         """Return target temperature"""
+        
         return self._target_temperature
 
     @property
     def target_temperature_high(self):
         """Return target high temperature"""
+        
         return self._target_temperature_high
 
     @property
     def target_temperature_low(self):
         """Return target low temerature"""
+        
         return self._target_temperature_low
 
     @property
     def target_temperature_step(self):
         """Return target temperature step"""
+        
         return self._target_temperature_step
 
     @property
     def max_temp(self):
         """Return max temperature"""
+        
         return self._max_temp
 
     @property
     def min_temp(self):
         """Return min temperature"""
+        
         return self._min_temp
 
     @property
     def hvac_mode(self):
         """Return HVAC mode"""
+        
         return self._hvac_mode
 
     @property
     def hvac_action(self):
         """Return HVAC action"""
+        
         return self._hvac_action
 
     @property
     def hvac_modes(self):
         """Return HVAC possible  modes"""
+        
         return list(tuple(self._hvac_modes.values()))
 
     @property
     def fan_mode(self):
         """Return fan mode"""
+        
         return self._fan_mode
 
     @property
     def fan_modes(self):
         """Return possible fan modes"""
+        
         return list(tuple(self._fan_modes.values()))
 
     @property
     def supported_features(self):
         """Return supported features"""
+        
         return self._supported_features
 
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
+        
         target_temp_low = kwargs.get(ATTR_TARGET_TEMP_LOW)
         target_temp_high = kwargs.get(ATTR_TARGET_TEMP_HIGH)
         if self._has_dual_setpoints:
@@ -270,14 +287,25 @@ class LyricThermostat(ClimateDevice):
 
     def set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
+        
         if hvac_mode in self._hvac_possible_modes_rev.keys():
             self.device.thermostatSetpointStatus = 'TemporaryHold'
             self.device.mode = self._hvac_possible_modes_rev[hvac_mode]
             _LOGGER.debug("Lyric set_hvac_mode-output-value=%s", self._hvac_possible_modes_rev[hvac_mode])
             self.device.operationMode = self._hvac_possible_modes_rev[hvac_mode]
 
+            #Fix dual setpoint to not be the same degree
+            if hvac_mode == HVAC_MODE_HEAT_COOL:
+                setpoint = self.device.heatSetpoint
+                
+                self.device.temperatureSetpoint = (
+                    setpoint + 1, 
+                    setpoint
+                )
+
     def set_fan_mode(self, fan):
         """Set fan state."""
+        
         if fan in self._fan_possible_modes_rev.keys():
             self.device.thermostatSetpointStatus = 'TemporaryHold'
             self.device.fanMode = self._fan_possible_modes_rev[fan]

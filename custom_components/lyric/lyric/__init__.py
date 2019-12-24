@@ -648,6 +648,8 @@ class Thermostat(lyricDevice):
 
     @property
     def maxSetpoint(self):
+        """Return max setpoint"""
+
         if self.can_heat:
             return self.maxHeatSetpoint
         else:
@@ -655,6 +657,8 @@ class Thermostat(lyricDevice):
 
     @property
     def minSetpoint(self):
+        """Return min setpoint"""
+
         if self.can_cool:
             return self.minCoolSetpoint
         else:
@@ -662,87 +666,129 @@ class Thermostat(lyricDevice):
 
     @property
     def changeableValues(self):
+        """Return changeable values"""
+
         return self.device.get('changeableValues')
 
     @property
     def operationStatus(self):
+        """Return operation status"""
+
         return self.device.get('operationStatus')
 
     @property
     def smartAway(self):
+        """Return smart away"""
+
         return self.device.get('smartAway')
 
     @property
     def indoorHumidity(self):
+        """Return indoor humidity"""
+
         return self.device.get('indoorHumidity')
 
     @property
     def indoorHumidityStatus(self):
+        """Return indoor humidity status"""
+
         return self.device.get('indoorHumidityStatus')
 
     @property
     def isAlive(self):
+        """Return is alive"""
+
         return self.device.get('isAlive')
 
     @property
     def isUpgrading(self):
+        """Return is upgrading"""
+
         return self.device.get('isUpgrading')
 
     @property
     def isProvisioned(self):
+        """Return is provisioned"""
+
         return self.device.get('isProvisioned')
 
     @property
     def settings(self):
+        """Return settings"""
+
         return self.device.get('settings')
 
     @property
     def fanMode(self):
+        """Return fan mode"""
+
         if self.settings and 'fan' in self.settings and 'changeableValues' in self.settings.get('fan'):
             return self.settings.get('fan').get('changeableValues').get('mode')
 
     @fanMode.setter
     def fanMode(self, mode):
+        """Set fan mode"""
+
         self.updateFan(mode)
 
     @property
     def macID(self):
+        """Return MAC id"""
+
         return self.device.get('macID')
 
     @property
     def scheduleStatus(self):
+        """Return schedule status"""
+
         return self.device.get('scheduleStatus')
 
     @property
     def allowedTimeIncrements(self):
+        """Return allowed time increment"""
+
         return self.device.get('allowedTimeIncrements')
 
     @property
     def thermostatVersion(self):
+        """Return thermostat version"""
+
         return self.device.get('thermostatVersion')
 
     @property
     def isRegistered(self):
+        """Return is registered"""
+
         return self.device.get('isRegistered')
 
     @property
     def devicesettings(self):
+        """Return device settings"""
+
         return self.device.get('devicesettings')
 
     @property
     def displayedOutdoorHumidity(self):
+        """Return outdoor humidity"""
+
         return self.device.get('displayedOutdoorHumidity')
 
     @property
     def currentSchedulePeriod(self):
+        """Return scheduled period"""
+
         return self.device.get('currentSchedulePeriod')
 
     @property
     def scheduleCapabilities(self):
+        """Return schedule capabilities"""
+
         return self.device.get('scheduleCapabilities')
 
     @property
     def scheduleType(self):
+        """Return schedule type"""
+
         if 'scheduleType' in self.device and 'scheduleType' in self.device['scheduleType']:
             return self.device.get('scheduleType').get('scheduleType')
         elif 'schedule' in self.device and 'scheduleType' in self.device['schedule']:
@@ -750,77 +796,114 @@ class Thermostat(lyricDevice):
 
     @property
     def scheduleSubType(self):
+        """Return schedule subtype"""
+
         return self.device.get('scheduleType').get('scheduleSubType')
 
 
 class WaterLeakDetector(lyricDevice):
+    """Water Leak Detector Class"""
 
     @property
     def waterPresent(self):
-            return self.device.get('waterPresent')
+        """Return water present"""
+
+        return self.device.get('waterPresent')
 
     @property
     def currentSensorReadings(self):
-            return self.device.get('currentSensorReadings')
+        """Return current sensor reading"""
+
+        return self.device.get('currentSensorReadings')
 
     @property
     def currentAlarms(self):
-            return self.device.get('currentAlarms')
+        """Return current alarms"""
+
+        return self.device.get('currentAlarms')
 
     @property
     def lastCheckin(self):
-            return self.device.get('lastCheckin')
+        """Return last checkin"""
+
+        return self.device.get('lastCheckin')
 
     @property
     def lastDeviceSettingUpdatedOn(self):
-            return self.device.get('lastDeviceSettingUpdatedOn')
+        """Return last device setting update on"""
+
+        return self.device.get('lastDeviceSettingUpdatedOn')
 
     @property
     def batteryRemaining(self):
-            return self.device.get('batteryRemaining')
+        """Return battery remaining"""
+
+        return self.device.get('batteryRemaining')
 
     @property
     def isRegistered(self):
-            return self.device.get('isRegistered')
+        """Return is registered"""
+
+        return self.device.get('isRegistered')
 
     @property
     def hasDeviceCheckedIn(self):
-            return self.device.get('hasDeviceCheckedIn')
+        """Return has device checked in"""
+
+        return self.device.get('hasDeviceCheckedIn')
 
     @property
     def isDeviceOffline(self):
-            return self.device.get('isDeviceOffline')
+        """Return is device offline"""
+
+        return self.device.get('isDeviceOffline')
 
     @property
     def firstFailedAttemptTime(self):
-            return self.device.get('firstFailedAttemptTime')
+        """Return first failed attempt time"""
+
+        return self.device.get('firstFailedAttemptTime')
 
     @property
     def failedConnectionAttempts(self):
-            return self.device.get('failedConnectionAttempts')
+        """Return failed connection attempts"""
+
+        return self.device.get('failedConnectionAttempts')
 
     @property
     def wifiSignalStrength(self):
-            return self.device.get('wifiSignalStrength')
+        """Return wifi signal strength"""
+
+        return self.device.get('wifiSignalStrength')
 
     @property
     def isFirmwareUpdateRequired(self):
-            return self.device.get('isFirmwareUpdateRequired')
+        """Return is firmware update required"""
+
+        return self.device.get('isFirmwareUpdateRequired')
 
     @property
     def time(self):
-            return self.device.get('time')
+        """Return time"""
+
+        return self.device.get('time')
 
     @property
     def deviceSettings(self):
-            return self.device.get('deviceSettings')
+        """Return device settings"""
+
+        return self.device.get('deviceSettings')
 
 
 class Lyric(object):
+    """Lyric Class"""
+
     def __init__(self, client_id, client_secret, cache_ttl=270,
                  user_agent='python-lyric/0.1',
                  token=None, token_cache_file=None,
                  local_time=False, app_name=None, redirect_uri=None):
+        """Setup Lyric Class"""
+
         self._client_id = client_id
         self._client_secret = client_secret
         self._app_name = app_name
@@ -839,12 +922,18 @@ class Lyric(object):
             self._lyricAuth()
 
     def __enter__(self):
+        """Return Self"""
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Return exit"""
+
         return False
 
     def _token_saver(self, token):
+        """Token saver"""
+
         self._token = token
         if self._token_cache_file is not None:
                 with os.fdopen(os.open(self._token_cache_file,
@@ -854,14 +943,20 @@ class Lyric(object):
 
     @property
     def token(self):
+        """Return token"""
+
         self._token
 
     @property
     def authorized(self):
+        """Return authorized"""
+
         self._lyricApi.authorized
 
     @property
     def getauthorize_url(self):
+        """Return session"""
+
         self._lyricApi = OAuth2Session(self._client_id,
                                        redirect_uri=self._redirect_uri,
                                        auto_refresh_url=REFRESH_URL,
@@ -873,6 +968,8 @@ class Lyric(object):
         return authorization_url
 
     def authorization_response(self, authorization_response):
+        """Get authorized response"""
+
         auth = HTTPBasicAuth(self._client_id, self._client_secret)
         headers = {'Accept': 'application/json'}
 
@@ -883,6 +980,8 @@ class Lyric(object):
         self._token_saver(token)
 
     def authorization_code(self, code, state):
+        """Return authorization status"""
+
         auth = HTTPBasicAuth(self._client_id, self._client_secret)
         headers = {'Accept': 'application/json'}
 
@@ -893,6 +992,8 @@ class Lyric(object):
         self._token_saver(token)
 
     def _lyricAuth(self):
+        """Get lyric authorization"""
+
         if (self._token_cache_file is not None and
             self._token is None and
             os.path.exists(self._token_cache_file)):
@@ -909,6 +1010,8 @@ class Lyric(object):
                                            token_updater=self._token_saver)
 
     def _lyricReauth(self):
+        """Lyric reauth"""
+
         if (self._token_cache_file is not None and
                     self._token is None and 
                     os.path.exists(self._token_cache_file)):
@@ -930,6 +1033,8 @@ class Lyric(object):
             self._token_saver(token)
 
     def _get(self, endpoint, **params):
+        """Lyric get request method"""
+
         params['apikey'] = self._client_id
         query_string = urllib.parse.urlencode(params)
         url = BASE_URL + endpoint + '?' + query_string
@@ -947,6 +1052,8 @@ class Lyric(object):
             _LOGGER.error("Error Lyric API: %s" % e)
 
     def _post(self, endpoint, data, **params):
+        """Lyric post request method"""
+
         params['apikey'] = self._client_id
         query_string = urllib.parse.urlencode(params)
         url = BASE_URL + endpoint + '?' + query_string
@@ -964,6 +1071,8 @@ class Lyric(object):
             _LOGGER.error("Error Lyric API: %s with data: %s" % (e, data))
 
     def _checkCache(self, cache_key):
+        """Check cache status"""
+
         if cache_key in self._cache:
             cache = self._cache[cache_key]
         else:
@@ -972,18 +1081,26 @@ class Lyric(object):
         return cache
 
     def _bust_cache_all(self):
+        """Destroy Cache"""
+
         self._cache = {}
 
     def _bust_cache(self, cache_key):
+        """Destroy specific cache entry"""
+
         self._cache[cache_key] = (None, 0)
 
     def _location(self, locationId):
+        """Return location"""
+
         for location in self._locations:
             if location.get('locationID') == locationId:
                 return location
 
     @property
     def _locations(self):
+        """Return locations"""
+
         cache_key = 'locations'
         value, last_update = self._checkCache(cache_key)
         now = time.time()
@@ -999,20 +1116,28 @@ class Lyric(object):
         return value
 
     def _user(self, locationId, userId):
+        """Return user"""
+
         for user in self._users(locationId):
             if user.get('userID') == userId:
                 return user
 
     def _users(self, locationId):
+        """Return users"""
+
         value = self._location(locationId).get('users')
         return value
 
     def _device(self, locationId, deviceId):
+        """Return device"""
+
         for device in self._devices(locationId):
             if device.get('deviceID') == deviceId:
                 return device
 
     def _devices(self, locationId, forceGet=False):
+        """Return devices"""
+
         if forceGet:
             cache_key = 'devices-%s' % locationId
             value, last_update = self._checkCache(cache_key)
@@ -1032,11 +1157,15 @@ class Lyric(object):
         return value
 
     def _device_type(self, locationId, deviceType, deviceId):
+        """Return devices of a specific type"""
+
         for device in self._devices_type(deviceType, locationId):
             if device.get('deviceID') == deviceId:
                 return device
 
     def _devices_type(self, deviceType, locationId):
+        """Return device type"""
+
         cache_key = 'devices_type-%s_%s' % (locationId, deviceType)
         value, last_update = self._checkCache(cache_key)
         now = time.time()
@@ -1049,6 +1178,8 @@ class Lyric(object):
 
     @property
     def locations(self):
+        """Return locations"""
+
         if (self._locations):
             return [Location(location['locationID'], self, self._local_time)
                     for location in self._locations]
