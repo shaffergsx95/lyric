@@ -7,8 +7,9 @@
       "http"
   ],
   "requirements": [
-      "voluptuous",
-      "requests"
+      "python-lyric==1.1.5",
+      "voluptuous==0.11.7",
+      "requests==2.22.0"
   ],
   "codeowners": [
     "@shellster"
