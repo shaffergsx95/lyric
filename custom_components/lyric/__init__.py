@@ -94,7 +94,9 @@ def setup_lyric(hass, lyric, config, url=None):
         _LOGGER.debug("url acquired, requesting access token")
         lyric.authorization_response(url)
 
-    if lyric.token is None:
+    # lyric.token is returning None
+    # so the best test is to check lyric._token instead
+    if lyric._token is None:
         _LOGGER.debug("no access_token, requesting configuration")
         request_configuration(lyric, hass, config)
         return
