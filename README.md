@@ -14,13 +14,13 @@ This will give support for the [Honeywell Lyric](http://yourhome.honeywell.com/e
 - Click “[Create New App](http://developer.honeywell.com/user/me/apps/add)”
 - Fill in details:
 - App name. Can be anything, I use Home Assistant.
-- In the “Callback URL” enter the adress to your Home Assistant instance: “https://yourhomeassistant:8123/api/lyric/authenticate”. If you have base_url in your http config, use this url. Otherwise use your local ip.
+- In the “Callback URL” enter the adress to your Home Assistant instance: “https://yourhomeassistant:8123/api/lyric/authenticate”. **If you have base_url in your http config, use this url.** Otherwise use your local ip.
 - Click “Save Changes”
 - On the apps page, click on the just created app.
 - The “Consumer Key” and “Consumer Secret” are shown now. These will be used as client_id and client_secret below.
 
 Once Home Assistant is started, a configurator will pop up asking you to log into your Lyric account.
-NOTE: This may be under "Notifications".
+*NOTE: This may be under "Notifications".*
 
 ### Configuration
 ```yaml
