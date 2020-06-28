@@ -45,3 +45,18 @@ Configuration variables:
 - *client_id* (Required): Your Lyric developer consumer key.
 - *client_secret* (Required): Your Lyric developer consumer secret.
 - *locations* (Optional): The location or locations you would like to include devices from. If not specified, this will include all locations in your Lyric account.
+
+### Troubleshooting
+#### *"The redirect URL provided does not match the redirect URL registered for the app."*
+This error will occur if the callback URL advertised to the Honeywell Home OAuth 2.0 API does not match what was entered upon app creation.
+#### Solution
+Ensure that *base_url: https://myHAserver.blah.org:myPort* is present in the *http:* entry in configuration.yaml.
+##### Example:
+```yaml
+# Example HTTP SSL configuration entry in configuration.yaml
+http:
+  ssl_certificate: /ssl/fullchain.pem
+  ssl_key: /ssl/privkey.pem
+  base_url: https://myHAserver.blah.org:myPort
+```
+
