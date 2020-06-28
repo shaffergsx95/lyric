@@ -51,6 +51,7 @@ Configuration variables:
 This error will occur if the callback URL advertised to the Honeywell Home OAuth 2.0 API does not match what was entered upon app creation.
 #### Solution
 Ensure that *base_url: https://myHAserver.blah.org:myPort* is present in the *http:* entry in configuration.yaml.
+*NOTE: This must be externally accessible.*
 ##### Example:
 ```yaml
 # Example HTTP SSL configuration entry in configuration.yaml
