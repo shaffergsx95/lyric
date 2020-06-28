@@ -20,6 +20,7 @@ This will give support for the [Honeywell Lyric](http://yourhome.honeywell.com/e
 - The “Consumer Key” and “Consumer Secret” are shown now. These will be used as client_id and client_secret below.
 
 Once Home Assistant is started, a configurator will pop up asking you to log into your Lyric account.
+NOTE: This may be under "Notifications".
 
 ### Configuration
 ```yaml
