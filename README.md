@@ -41,6 +41,6 @@ lyric:
 
 Configuration variables:
 
-- *client_id* (Required): Your Lyric developer client id.
-- *client_secret* (Required): Your Lyric developer client secret.
+- *client_id* (Required): Your Lyric developer consumer key.
+- *client_secret* (Required): Your Lyric developer consumer secret.
 - *locations* (Optional): The location or locations you would like to include devices from. If not specified, this will include all locations in your Lyric account.
