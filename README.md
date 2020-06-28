@@ -25,15 +25,15 @@ Once Home Assistant is started, a configurator will pop up asking you to log int
 ```yaml
 # Example configuration.yaml entry
 lyric:
-  client_id: CLIENT_ID
-  client_secret: CLIENT_SECRET
+  client_id: CONSUMER_KEY
+  client_secret: CONSUMER_SECRET
 ```
 
 ```yaml
 # Example configuration.yaml entry to show only devices at your vacation and primary homes
 lyric:
-  client_id: CLIENT_ID
-  client_secret: CLIENT_SECRET
+  client_id: CONSUMER_KEY
+  client_secret: CONSUMER_SECRET
   locations:
     - Vacation
     - Primary
